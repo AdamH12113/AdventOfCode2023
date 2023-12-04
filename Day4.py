@@ -28,11 +28,28 @@ for line in input_lines:
 # the first winning number and doubles for each extra winning number. What is the total point score?
 total_score = 0
 for game in range(num_games):
-	#print(winning_numbers[game], '|', numbers_we_have[game])
 	num_matches = sum(1 for n in numbers_we_have[game] if n in winning_numbers[game])
 	total_score += int(2**(num_matches - 1))
 print(f"Part 1: The total point value of the cards is: {total_score}")
 
 # Part 2: Winning numbers now cause us to win copies of scratchcards. The number of matches gives
 # the number of copies, and copies from from the cards further down the list. How many total
-# scratchcards do we end up with?
+# scratchcards do we end up with? This looks simple but the number of cards to process grows
+# quadratically, so we need to save our results.
+cards_won_cache = {}
+
+def count_cards_won(card: int) -> int:
+	if card in cards_won_cache:
+		return cards_won_cache[card]
+
+	num_wins = 0
+	num_matches = sum(1 for n in numbers_we_have[card] if n in winning_numbers[card])
+	num_wins += num_matches
+	for n in range(card + 1, card + 1 + num_matches):
+		num_wins += cards_won_cache[n] if n in cards_won_cache else count_cards_won(n)
+	cards_won_cache[card] = num_wins
+	return num_wins
+
+card_queue = list(reversed(range(num_games)))
+total_cards_won = sum(count_cards_won(card) for card in card_queue)
+print(f"Part 2: The number of scratchcards we end up with is: {total_cards_won + num_games}")
