@@ -8,7 +8,8 @@ try:
 	with open(filename, 'rt') as f:
 		input_text = f.read()[:-1]
 except Exception as e:
-	print(f"Error reading input: [{exception.__class__.__name__}] {exception}")
+	print(f"Error reading input: [{e.__class__.__name__}] {e}")
+	exit()
 
 # Process the input. Each line has a history consisting of a list of numbers separated by spaces.
 input_lines = input_text.split('\n')
@@ -17,7 +18,7 @@ histories = [[int(n) for n in re.findall(r'\-?\d+', line)] for line in input_lin
 # Part 1: Extrapolate the next value in each history by (essentially) computing derivatives until
 # I get zeros, then adding another zero to the end of the final derivative and extrapolating upward
 # from there. What is the sum of these extrapolated values?
-def compute_derivative(sequence: [int]):
+def compute_derivative(sequence: list):
 	derivative = []
 	for n in range(1, len(sequence)):
 		derivative.append(sequence[n] - sequence[n-1])

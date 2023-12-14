@@ -8,7 +8,8 @@ try:
 	with open(filename, 'rt') as f:
 		input_text = f.read()[:-1]
 except Exception as e:
-	print(f"Error reading input: [{exception.__class__.__name__}] {exception}")
+	print(f"Error reading input: [{e.__class__.__name__}] {e}")
+	exit()
 
 # Process the input. There's a list of times on one line and a list of distances on the other line.
 input_lines = input_text.split('\n')

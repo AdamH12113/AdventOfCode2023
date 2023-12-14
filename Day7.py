@@ -9,7 +9,8 @@ try:
 	with open(filename, 'rt') as f:
 		input_text = f.read()[:-1]
 except Exception as e:
-	print(f"Error reading input: [{exception.__class__.__name__}] {exception}")
+	print(f"Error reading input: [{e.__class__.__name__}] {e}")
+	exit()
 
 # Process the input. Each line is one Camel Cards hand and a numerical bid
 input_lines = input_text.split('\n')
@@ -137,7 +138,7 @@ def compare_joker_hand_values(hand1: str, hand2: str):
 	return 0
 
 # Unchanged from part 1 except for function calls. Could've monkey-patched, I guess.
-def compare_hands(hand1: str, hand2: str):
+def compare_joker_hands(hand1: str, hand2: str):
 	hand1_type = find_joker_hand_type(hand1)
 	hand2_type = find_joker_hand_type(hand2)
 	if hand1_type != hand2_type:
@@ -145,6 +146,6 @@ def compare_hands(hand1: str, hand2: str):
 	else:
 		return compare_joker_hand_values(hand1, hand2)
 
-sorted_hands = sorted(list(hands), key=cmp_to_key(compare_hands))
+sorted_hands = sorted(list(hands), key=cmp_to_key(compare_joker_hands))
 total_winnings = sum((h + 1) * hands[sorted_hands[h]] for h in range(len(sorted_hands)))
 print(f"Part 2: The total winnings are: {total_winnings}")
