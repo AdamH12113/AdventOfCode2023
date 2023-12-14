@@ -92,9 +92,3 @@ def find_new_symmetry(grid: list):
 
 result = sum(find_new_symmetry(grid) for grid in grids)
 print(f"Part 2: The summarized value is: {result}")
-
-
-
-
-
-
