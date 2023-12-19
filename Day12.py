@@ -43,18 +43,20 @@ def count_valid_combinations(record: str, groups: list):
 	for combo in record_combinations(record):
 		if matches_groups(combo, groups):
 			num_valid_combos += 1
-	print(record, num_valid_combos)
 	return num_valid_combos
 
-total_valid_combos = sum(count_valid_combinations(records[n], group_sizes[n]) for n in range(len(records)))
-print(f"Part 1: The total count of valid arrangements is: {total_valid_combos}")
+#total_valid_combos = sum(count_valid_combinations(records[n], group_sizes[n]) for n in range(len(records)))
+#print(f"Part 1: The total count of valid arrangements is: {total_valid_combos}")
 
 # Part 2: Replace each record and group size list with five concatenated copies of itself. Yeah,
 # I had a feeling... Well, there's no way we're going to iterate over 60 bits of possibilities, so
 # we need a log(n) algorithm. That's a lot to ask from a poor EE... maybe some sort of greedy search
 # where we handle one group of ?s at a time? Still a lot, but at least it maxes out a millions of
 # combinations instead of billions.
+
+
+
+
 for n in range(len(records)):
 	new_record = records[n] + '?' + records[n] + '?' + records[n] + '?' + records[n] + '?' + records[n]
 	new_group_sizes = group_sizes[n] * 5
-	print(new_record, new_group_sizes)

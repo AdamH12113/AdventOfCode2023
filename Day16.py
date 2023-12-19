@@ -89,13 +89,3 @@ for y in range(y_size):
 	max_energized = max(max_energized, energized)
 	
 print(f"Part 2: The maximum possible number of energized tiles is: {max_energized}")
-
-
-
-
-
-
-
-
-
-
