@@ -27,6 +27,10 @@ def print_grid(grid: list):
 # steps in any direction. Time for a breadth-first search! (I'm surprised its taken this long to
 # need one, honestly.) Since the search state is a bit more complicated than just coordinates, I'm
 # going to take this opportunity to experiment with named tuples.
+
+# Internet suggests making a tuple of coords, direction, and steps and doing the BFS on that
+
+
 Coord = namedtuple('Coord', ['x', 'y'])
 State = namedtuple('State', ['coord', 'dir', 'dirsteps', 'loss'])
 up = Coord(0, -1)
