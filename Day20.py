@@ -21,10 +21,10 @@ input_lines = input_text.split('\n')
 class Broadcast:
 	def __init__(self, targets: list):
 		self.targets = targets
-	
+
 	def receive_pulse(self, input_name: str, state: bool) -> bool:
 		return state
-	
+
 	def __str__(self):
 		return f"Broadcaster -> {self.targets}"
 
@@ -33,14 +33,14 @@ class FlipFlop:
 		self.name = name
 		self.targets = targets
 		self.state = False
-	
+
 	def receive_pulse(self, input_name: str, state: bool) -> bool:
 		if state:
 			return None
 		else:
 			self.state = not self.state
 			return self.state
-	
+
 	def __str__(self):
 		return f"FlipFlop {self.name} -> {self.targets}"
 
@@ -49,14 +49,14 @@ class Conjunction:
 		self.name = name
 		self.targets = targets
 		self.inputs = {}
-	
+
 	def add_input(self, input_name: str):
 		self.inputs[input_name] = False
-	
+
 	def receive_pulse(self, input_name: str, state: bool) -> bool:
 		self.inputs[input_name] = state
 		return not all(self.inputs.values())
-	
+
 	def __str__(self):
 		return f"Conjunction {list(self.inputs)} -> {self.name} -> {self.targets}"
 
@@ -88,7 +88,7 @@ def push_button(modules: dict):
 	event_queue = [TargetedPulse(False, 'button', 'broadcaster')]
 	high_count = 0
 	low_count = 0
-	
+
 	while len(event_queue) > 0:
 		pulse, source, target = event_queue.pop()
 		if pulse:
@@ -105,7 +105,7 @@ def push_button(modules: dict):
 		if next_pulse is not None:
 			for t in modules[target].targets:
 				event_queue.insert(0, TargetedPulse(next_pulse, target, t))
-	
+
 	return high_count, low_count
 
 total_high = 0
@@ -123,7 +123,7 @@ class Receiver:
 	def __init__(self, name: str):
 		self.name = name
 		self.activated = False
-	
+
 	def receive_pulse(self, input_name: str, state: bool) -> bool:
 		if state == False:
 			self.activated = True
@@ -132,10 +132,36 @@ class Receiver:
 	def __str__(self):
 		return f"Receiver {self.name}: {self.activated}"
 
-modules['rx'] = Receiver('rx')
+TargetedPulse = namedtuple('TargetedPulse', ['pulse', 'source', 'targets'])
 
-for pushes in range(1, 1000000000):
-	push_button(modules)
-	if modules['rx'].activated:
-		print(f"Part 2: The number of button presses needed to activate module rx is: {pushes}")
-		break
+def push_button(modules: dict, num_pushes: int):
+	event_queue = [TargetedPulse(False, 'button', ['broadcaster'])]
+
+	while len(event_queue) > 0:
+		pulse, source, targets = event_queue.pop()
+
+		for target in targets:
+			# Handle output modules
+			if target not in modules:
+				continue
+
+			# rx is fed by a single conjunction module called &lx
+			if target == 'lx' and pulse == True:
+				print(target, pulse, source, num_pushes)
+
+			next_pulse = modules[target].receive_pulse(source, pulse)
+			if next_pulse is not None:
+				event_queue.insert(0, TargetedPulse(next_pulse, target, modules[target].targets))
+
+# Our target module rx will only get a low pulse when &lx gets high pulses on each of its inputs on
+# the same button press. By inspecting the console output, I found that &lx's input modules produce
+# high pulses at the following intervals:
+#   &cl: 3733
+#   &lb: 3911
+#   &rp: 4091
+#   &nj: 4093
+#
+# The least common multiple of these intervals is the answer: 244465191362269
+modules['rx'] = Receiver('rx')
+for pushes in range(1, 13000):
+	push_button(modules, pushes)
