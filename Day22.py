@@ -57,8 +57,8 @@ class Brick:
 			self.direction = Coord(0, 1, 0)
 		else:
 			self.direction = Coord(0, 0, 1)
-		self.below = []
-		self.above = []
+		self.below = set()
+		self.above = set()
 	
 	def move_down(self):
 		self.c1.z -= 1
@@ -83,31 +83,32 @@ y_size = max(max(b.c1.y, b.c2.y) for b in bricks.values())
 # other, not balance. The bricks are still in the air, so we need to figure out where they all end
 # up first. Let's start by sorting the bricks by height.
 sorted_ids = sorted(bricks.keys(), key=lambda id: min(bricks[id].c1.z, bricks[id].c2.z))
-fallen_ids = []
-n = 0
+
+# After getting stuck on part 2 I became desperate for a faster way of doing part 1. Tracking which
+# bricks end at which z coordinates turned out to be the key to optimizing the distressingly-nested
+# loops below.
+z_max = max(b.c2.z for b in bricks.values())
+z_index = {z: set() for z in range(z_max)}
 
 for id in sorted_ids:
-	print(n, id)
-	n += 1
 	brick = bricks[id]
 	supported = False
 	while not supported and brick.c1.z > 0:
-		for c in brick.coord_range():
-			below = c + down
-			for id2 in fallen_ids:
-				if bricks[id2].c2.z < below.z:
-					continue
+		crange = [brick.c1] if brick.direction.z == 1 else brick.coord_range()
+		ids_to_check = z_index[brick.c1.z - 1]
+		for id2 in ids_to_check:
+			for c in crange:
+				below = c + down
 				if below in bricks[id2]:
 					supported = True
-					if id2 not in brick.below:
-						brick.below.append(id2)
-						bricks[id2].above.append(id)
+					brick.below.add(id2)
+					bricks[id2].above.add(id)
 		if not supported:
 			brick.move_down()
-	fallen_ids.append(id)
+	z_index[brick.c2.z].add(id)
 
 num_disintegrable = 0
-for id in fallen_ids:
+for id in sorted_ids:
 	disintegrable = True
 	for ba_id in bricks[id].above:
 		if len(bricks[ba_id].below) == 1:
@@ -116,5 +117,31 @@ for id in fallen_ids:
 		num_disintegrable += 1
 print(f"Part 1: The number of disintegrable blocks is: {num_disintegrable}")
 
+# Part 2: For each brick, determine how many other bricks would fall if that brick were
+# disintegrated. What is the sum of those counts? Superficially, this seems like something where
+# we could start from the top and keep track of results, but the interconnected nature of the
+# bricks makes this tricky. I wonder if we could go from the top down? We could iterate downward
+# through all possible paths and see if they converge at a single brick. Such a brick is apparently
+# called a "dominator" in graph theory. It looks like all the ways of solving this problem are
+# somewhat difficult to implement. Since the vast majority of bricks are only supported by one
+# brick below, I'm going to do something easier but inefficient.
+sorted_fallen_ids = sorted(bricks.keys(), key=lambda id: bricks[id].c1.z)
+for id in sorted_fallen_ids:
+	if bricks[id].c1.z > 0:
+		first_nonzero_id = id
+		break
 
+sum_additional_destroyed_bricks = 0
+for n in range(len(sorted_fallen_ids)):
+	id = sorted_fallen_ids[n]
+	destroyed = set()
+	destroyed.add(id)
+	not_on_ground = filter(lambda id: bricks[id].c1.z > 0, sorted_fallen_ids)
+	
+	for id2 in not_on_ground:
+		if all(b in destroyed for b in bricks[id2].below):
+			destroyed.add(id2)
+	sum_additional_destroyed_bricks += len(destroyed) - 1
+
+print(f"Part 2: The sum of the number of additional falling bricks is: {sum_additional_destroyed_bricks}")
 
