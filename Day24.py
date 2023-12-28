@@ -94,12 +94,10 @@ for h1 in range(len(positions) - 1):
 	for h2 in range(h1 + 1, len(positions)):
 		intersection = find_2d_intersection(positions[h1], velocities[h1], positions[h2], velocities[h2])
 		if intersection is None:
-			print(positions[h1], positions[h2], 'no intersection')
 			continue
 		
 		dt1 = (intersection.x - positions[h1].x) / velocities[h1].x
 		dt2 = (intersection.x - positions[h2].x) / velocities[h2].x
-		print(positions[h2], positions[h2], intersection, dt1, dt2)
 		if dt1 > 0 and dt2 > 0 and intersection.x >= test_area_min and intersection.x <= test_area_max and \
 		              intersection.y >= test_area_min and intersection.y <= test_area_max:
 			num_valid_hits += 1
@@ -109,7 +107,103 @@ print(f"Part 1: The number of intersections in the target area is: {num_valid_hi
 # every hailstone as it falls. Find the position and velocity required to do this, then find the
 # sum of the x, y, and z coordinates of the position? Collisions don't affect the rock's motion,
 # so the hailstone paths must all intersect with some line, but how on earth do I find it?
+# The internet suggests either constructing a system of equations or looking at pairs of hailstones
+# with identical velocity components to find possible stone velocities. I tried doing the algebra
+# my self but it apparently difficult and this is supposed to be a fun programming puzzle, so let's
+# go with the exploratory method.
+# Prime factorization code from here: https://stackoverflow.com/a/22808285/5220760
+def prime_factors(n):
+    i = 2
+    factors = []
+    while i * i <= n:
+        if n % i:
+            i += 1
+        else:
+            n //= i
+            factors.append(i)
+    if n > 1:
+        factors.append(n)
+    return factors
 
+# This method seems to work on the real input but not on the example
+intset = None
+for h1 in range(len(velocities) - 1):
+	for h2 in range(h1+1, len(velocities)):
+		if velocities[h1].x == velocities[h2].x:
+			pdiff = int(abs(positions[h2].x - positions[h1].x))
+			vel = int((velocities[h1].x))
+			modset = set()
+			for v in range(-5000, 5000):
+				if v != vel and pdiff % (v - vel) == 0:
+					modset.add(v)
+			if intset is None:
+				intset = modset
+			else:
+				intset = intset.intersection(modset)
+			if len(intset) == 1:
+				rock_vx = list(intset)[0]
+				break
+	if intset and len(intset) == 1:
+		break
 
+intset = None
+for h1 in range(len(velocities) - 1):
+	for h2 in range(h1+1, len(velocities)):
+		if velocities[h1].y == velocities[h2].y:
+			pdiff = int(abs(positions[h2].y - positions[h1].y))
+			vel = int((velocities[h1].y))
+			modset = set()
+			for v in range(-5000, 5000):
+				if v != vel and pdiff % (v - vel) == 0:
+					modset.add(v)
+			if intset is None:
+				intset = modset
+			else:
+				intset = intset.intersection(modset)
+			if len(intset) == 1:
+				rock_vy = list(intset)[0]
+				break
+	if intset and len(intset) == 1:
+		break
+
+intset = None
+for h1 in range(len(velocities) - 1):
+	for h2 in range(h1+1, len(velocities)):
+		if velocities[h1].z == velocities[h2].z:
+			pdiff = int(abs(positions[h2].z - positions[h1].z))
+			vel = int((velocities[h1].z))
+			modset = set()
+			for v in range(-5000, 5000):
+				if v != vel and pdiff % (v - vel) == 0:
+					modset.add(v)
+			if intset is None:
+				intset = modset
+			else:
+				intset = intset.intersection(modset)
+			if len(intset) == 1:
+				rock_vz = list(intset)[0]
+				break
+	if intset and len(intset) == 1:
+		break
+
+vrock = Vector(rock_vx, rock_vy, rock_vz)
+print("Rock velocity:", vrock)  # (133,278,85) on the real input
+
+# Well, none of the weird regularities that people online reported in the input apply to me, so I
+# guess I'm solving a (simplified) system of equations. I'm just going to dump this into Wolfram
+# Alpha or something; there's no point in forcing Python to do this.
+#
+# rx + t1*rvx = h1x + t1*h1vx    # Repeat for y and z and do two hailstones
+#
+# x + t*133 = 200027938836082 + t*133
+# y + t*278 = 135313515251542 + t*259
+# z + t*85 = 37945458137479 + t*506
+# x + u*133 = 285259862606823 + u*12
+# y + u*278 = 407476720802151 + u*-120
+#
+# x = 200027938836082
+# y = 127127087242193
+# z = 219339468239370
+print(f"Part 2: The sum of the coordinates is: {200027938836082 + 127127087242193 + 219339468239370}")
 
 
