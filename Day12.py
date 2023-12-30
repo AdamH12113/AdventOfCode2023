@@ -52,11 +52,43 @@ def count_valid_combinations(record: str, groups: list):
 # I had a feeling... Well, there's no way we're going to iterate over 60 bits of possibilities, so
 # we need a log(n) algorithm. That's a lot to ask from a poor EE... maybe some sort of greedy search
 # where we handle one group of ?s at a time? Still a lot, but at least it maxes out a millions of
-# combinations instead of billions.
+# combinations instead of billions. The internet suggests using the size of the gaps between the
+# groups as a variable. Let's try a recursive solution using that. Turns out I need memorization
+# (I refuse to call it "memoization") to get usable performance.
+memo = {}
+def count_valid_combos(rem_rec: str, rem_groups: tuple, depth: int):
+	key = (rem_rec, rem_groups, depth)
+	if key in memo:
+		return memo[key]
 
+	if len(rem_groups) == 0:
+		return 0 if '#' in rem_rec else 1
+	else:
+		valid_gaps = []
+		for gap in range(0 if (depth == 0 or len(rem_groups) == 0) else 1, 100):
+			doable = len(rem_rec) >= gap and '#' not in rem_rec[:gap]
+			if doable:
+				valid_gaps.append(gap)
 
+		valid_combos = 0
+		for gap in valid_gaps:
+			gap_rec = rem_rec[gap:]
+			doable = len(gap_rec) >= rem_groups[0] and '.' not in gap_rec[:rem_groups[0]]
+			if doable:
+				valid_combos += count_valid_combos(gap_rec[rem_groups[0]:], rem_groups[1:], depth + 1)
+		memo[key] = valid_combos
+		return valid_combos
 
+# Might as well redo part 1 here; it runs much faster
+total_valid_combos = 0
+for n in range(len(records)):
+	total_valid_combos += count_valid_combos(records[n], tuple(group_sizes[n]), 0)
+print(f"Part 1: The total count of valid arrangements is: {total_valid_combos}")
 
+# Let's finish this off. Takes about 3 seconds to run.
+total_valid_combos = 0
 for n in range(len(records)):
 	new_record = records[n] + '?' + records[n] + '?' + records[n] + '?' + records[n] + '?' + records[n]
 	new_group_sizes = group_sizes[n] * 5
+	total_valid_combos += count_valid_combos(new_record, tuple(new_group_sizes), 0)
+print(f"Part 2: The total count of valid arrangements is: {total_valid_combos}")
