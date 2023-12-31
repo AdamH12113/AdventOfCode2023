@@ -66,13 +66,81 @@ for rating in ratings:
 		sum_scores += score(rating)
 print(f"Part 1: The sum of the ratings of the accepted parts is: {sum_scores}")
 
-# Part 1: Forget the part list. Each of the four ratings can have a value between 1 and 4000. How
+# Part 2: Forget the part list. Each of the four ratings can have a value between 1 and 4000. How
 # many combinations of ratings will be accepted? Sheesh, I was hoping for an easy puzzle today...
+# Time for some recursion! We'll need to reprocess the rules, too, since the functional approach is
+# (not unexpectedly) entirely wrong for this part.
+Rule = namedtuple('Rule', ['stat', 'oper', 'level', 'target'])
+workflows: dict[str, Rule] = {}
+for line in workflow_lines:
+	bkt = line.index('{')
+	name = line[:bkt]
+	instructions = line[bkt+1:-1].split(',')
+	inst_rules = []
+	for inst in instructions[:-1]:
+		stat = inst[0]
+		oper = inst[1]
+		level = int(re.findall(r'\d+', inst)[0])
+		target = inst[inst.index(':')+1:]
+		inst_rules.append(Rule(stat, oper, level, target))
+	inst_rules.append(Rule('', 'default', '', instructions[-1]))
+	workflows[name] = inst_rules
 
+# Each rule affects one stat and only ever shrinks its range (i.e. never splits it into two ranges).
+# This makes the ranges fairly easy to represent.
+Range = namedtuple('Range', ['low', 'high'])
+Ranges = namedtuple('Ranges', ['x', 'm', 'a', 's'])
 
+def range_size(range: Range):
+	return 1 + range.high - range.low
 
+def ranges_combos(ranges: Ranges):
+	return range_size(ranges.x) * range_size(ranges.m) * range_size(ranges.a) * range_size(ranges.s)
 
+def split_range(range: Range, oper: str, level: int):
+	if oper == '<':
+		if range.low >= level:
+			return None, range
+		elif range.high < level:
+			return range, None
+		else:
+			return Range(range.low, level - 1), Range(level, range.high)
+	else:
+		if range.high <= level:
+			return None, range
+		elif range.low > level:
+			return range, None
+		else:
+			return Range(level + 1, range.high), Range(range.low, level)
 
+def update_ranges(stat: str, new_range: Range, ranges: Ranges):
+	return Ranges(
+		x = ranges.x if stat != 'x' else new_range,
+		m = ranges.m if stat != 'm' else new_range,
+		a = ranges.a if stat != 'a' else new_range,
+		s = ranges.s if stat != 's' else new_range)
 
+def count_valid_combos(workflow: str, ranges: Ranges):
+	if workflow == 'A':
+		return ranges_combos(ranges)
+	elif workflow == 'R':
+		return 0
+	else:
+		valid_combos = 0
+		for rule in workflows[workflow]:
+			if rule.oper == 'default':
+				valid_combos += count_valid_combos(rule.target, ranges)
+			else:
+				stat_range = ranges.__getattribute__(rule.stat)
+				in_range, out_range = split_range(stat_range, rule.oper, rule.level)
+				if in_range is not None:
+					valid_combos += count_valid_combos(rule.target, update_ranges(rule.stat, in_range, ranges))
+				if out_range is None:
+					break
+				else:
+					ranges = update_ranges(rule.stat, out_range, ranges)
+		return valid_combos
 
-
+start_ranges = Ranges(Range(1, 4000), Range(1, 4000), Range(1, 4000), Range(1, 4000))
+num_valid_combos = count_valid_combos('in', start_ranges)
+print(f"Part 2: The number of accepted rating combinations is: {num_valid_combos}")
